@@ -6,18 +6,25 @@ import os
 import traceback
 from stress_detector import StressDetector
 
-# Initialize detector once (stays loaded between requestscddd
+# Initialize detector once (stays loaded between requests)
 print("="*60)
 print("🚀 Initializing Stress Detector...")
 print("="*60)
 
 detector = None
 
+def get_detector():
+    """Get or initialize the stress detector, retrying if previous init failed."""
+    global detector
+    if detector is None:
+        detector = StressDetector()
+        print("="*60)
+        print("✅ Stress Detector Ready!")
+        print("="*60)
+    return detector
+
 try:
-    detector = StressDetector()
-    print("="*60)
-    print("✅ Stress Detector Ready!")
-    print("="*60)
+    get_detector()
 except Exception as e:
     print(f"❌ Failed to initialize detector: {e}")
     traceback.print_exc()
@@ -49,12 +56,16 @@ def handler(event):
     print("📨 Received new request")
     print("="*60)
     
-    if detector is None:
+    try:
+        active_detector = get_detector()
+    except Exception as e:
+        print(f"❌ Failed to initialize detector: {e}")
+        traceback.print_exc()
         return {
             "status": "error",
-            "error": "Detector not initialized"
+            "error": f"Detector not initialized: {e}"
         }
-    
+
     try:
         # Get base64 audio from input
         audio_base64 = event["input"].get("audio_base64")
@@ -80,7 +91,7 @@ def handler(event):
         
         try:
             # Run stress detection
-            results = detector.analyze_audio(tmp_path)
+            results = active_detector.analyze_audio(tmp_path)
             
             print("✅ Analysis complete!")
             
