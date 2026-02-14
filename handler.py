@@ -6,7 +6,7 @@ import os
 import traceback
 from stress_detector import StressDetector
 
-# Initialize detector once (stays loaded between requests)
+# Initialize detector once (stays loaded between requestscddd
 print("="*60)
 print("🚀 Initializing Stress Detector...")
 print("="*60)
