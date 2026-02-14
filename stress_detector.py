@@ -41,25 +41,35 @@ class StressDetector:
         """Load the custom stress detection model from HuggingFace"""
         repo = "forwarder1121/voice-based-stress-recognition"
         
-        try:
-            # Download and load custom models.py
-            code_path = hf_hub_download(repo_id=repo, filename="models.py")
-            spec = importlib.util.spec_from_file_location("models", code_path)
-            models = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(models)
-            
-            # Load model
-            model = AutoModelForAudioClassification.from_pretrained(
-                repo,
-                trust_remote_code=True,
-                torch_dtype=torch.float32
-            ).to(self.device)
-            model.eval()
-            
-            return model
-        except Exception as e:
-            print(f"❌ Error loading stress model: {e}")
-            raise
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                print(f"📥 Attempting to load stress model (attempt {attempt + 1}/{max_retries})...")
+                
+                # Download and load custom models.py
+                code_path = hf_hub_download(repo_id=repo, filename="models.py")
+                spec = importlib.util.spec_from_file_location("models", code_path)
+                models = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(models)
+                
+                # Load model
+                model = AutoModelForAudioClassification.from_pretrained(
+                    repo,
+                    trust_remote_code=True,
+                    torch_dtype=torch.float32
+                ).to(self.device)
+                model.eval()
+                
+                print("✅ Stress model loaded successfully")
+                return model
+                
+            except Exception as e:
+                print(f"❌ Attempt {attempt + 1} failed: {e}")
+                if attempt < max_retries - 1:
+                    import time
+                    time.sleep(5)
+                else:
+                    raise
     
     def load_audio(self, audio_path, target_sr=16000):
         """Load and preprocess audio file"""
