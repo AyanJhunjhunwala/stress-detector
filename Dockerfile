@@ -36,9 +36,6 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 COPY handler.py .
 COPY stress_detector.py .
 
-# Pre-download models
-RUN python3 -c "from transformers import Wav2Vec2Model, Wav2Vec2Processor; \
-    Wav2Vec2Model.from_pretrained('facebook/wav2vec2-base-960h'); \
-    Wav2Vec2Processor.from_pretrained('facebook/wav2vec2-base-960h')"
+# Models will download on first request instead of during build
 
 CMD ["python3", "-u", "handler.py"]
